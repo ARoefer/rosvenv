@@ -30,7 +30,7 @@ createROSWS() {
                 cd $1/src
                 catkin_init_workspace
                 cd ..
-                python -m venv --system-site-packages pyenv
+                python3 -m venv --system-site-packages pyenv
                 source pyenv/bin/activate
                 catkin build
                 activateROS .
