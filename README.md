@@ -13,11 +13,8 @@ Sounds good? Then come right on in!
 Installation is as easy as chewing gum! First you need to make sure that you have python's `venv` package:
 
 ```
-# For ROS melodic and lower
-sudo apt install python2.7-venv
-
-# For ROS noetic
-sudo apt install python-venv
+# For all ROS versions. Python 2 does not have venv
+sudo apt install python3-venv
 
 ```
 
