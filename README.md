@@ -2,23 +2,17 @@
 
 Have you ever found yourself begrudgingly installing python packages globally when using ROS1? Have you ever been annoyed by constantly having to configure your `ROS_IP` and `ROS_MASTER_URI` environment variables for your different robots? If your answer was "yes", then this little bash script is for you! 
 
-**ROSVENV** is a very small set of bash scripts that help you to create and use catkin workspaces with isolated Python environments. It can source and un-source (is that even a word?) your workspace, and can configure your connection to distant ROS masters easily. 
+**ROSVCONDA** is a very small set of bash scripts that help you to create and use catkin workspaces with isolated Python environments. It can source and un-source (is that even a word?) your workspace, and can configure your connection to distant ROS masters easily. 
 
 Sounds good? Then come right on in!
 
 (Only tested with noetic and Python3 so far, so, beware...)
 
+Built on **ROSENV** by the one and only Adrian Röfer. I've only switched out pyenv for conda.
+
 ## Installation
 
-Installation is as easy as chewing gum! First you need to make sure that you have python's `venv` package:
-
-```
-# For all ROS versions. Python 2 does not have venv
-sudo apt install python3-venv
-
-```
-
-Then, simply `cd` to the root of this repository and run the install script:
+Simply `cd` to the root of this repository and run the install script:
 
 ```bash
 cd path/to/rosvenv
@@ -41,14 +35,16 @@ createROSWS path/to/new/ws
 
 This is probably the first command you will try out. `createROSWS` takes a path for a directory to create and initializes a new catkin workspace within it. If ROS is not sourced it will source your installed version from `/opt/ros/*/setup.bash`. **NOTE**: If you, however you managed that, have multiple ROS versions installed, it will source all of them. In that case you should source ROS manually first.
 
-At the root of the workspace the command has created a `pyenv` directory containing the virtual environment for your workspace. The structure of your workspace should look something like this:
+At the root of the workspace the command has created a `condenv.txt` file, containing the name of the conda env to be activated for your workspace.
+It is set based on the env currently active when running the script, so activate you proper env before.
+The structure of your workspace should look something like this:
 
 ```
 ws
 ├── build
 ├── devel
 ├── logs
-├── pyenv
+├── condenv.txt
 ├── pypath (optional)
 └── src
 ``` 
