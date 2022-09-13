@@ -32,8 +32,16 @@ createROSWS() {
                 cd $1/src
                 catkin_init_workspace
                 cd ..
-                CONDA_ENV_NAME=${CONDA_PREFIX##*/}
-                echo "$CONDA_ENV_NAME" > $CONDA_ENV_FILE_NAME
+                if [[ -z "${CONDA_PREFIX}" ]]; then
+                    CONDA_ENV_NAME=${CONDA_PREFIX##*/}
+                    echo "$CONDA_ENV_NAME" > $CONDA_ENV_FILE_NAME
+                    echo "Found activate conda env ${CONDA_ENV_NAME}. Saved it to workspace."
+                else
+                    echo "No activate conda env found. Creating venv."
+                    python3 -m venv --system-site-packages pyenv
+                    source pyenv/bin/activate
+                fi
+
                 catkin build
                 activateROS .
             else
@@ -69,8 +77,15 @@ activateROS() {
         fi
 
         source "${ws_dir}/devel/setup.bash"
-        CONDA_ENV_NAME=$(cat "$ws_dir/$CONDA_ENV_FILE_NAME")
-        conda activate $CONDA_ENV_NAME
+        if test -f "$ws_dir/$CONDA_ENV_FILE_NAME"; then
+            echo "Found conda env. Sourcing"
+            CONDA_ENV_NAME=$(cat "$ws_dir/$CONDA_ENV_FILE_NAME")
+            conda activate $CONDA_ENV_NAME
+        else
+            echo "No conda env found. Sourcing venv"
+            source "${ws_dir}/pyenv/bin/activate"
+        fi
+
 
         if [ -f "${ws_dir}/pypath" ]; then
             export PYTHONPATH=$PYTHONPATH:$(tr '\n' ':' < "${ws_dir}/pypath")
