@@ -1,4 +1,4 @@
-# ROSVCONDA - Adrian Roefer, Jan Ole von Hartz (2022)
+# ROSENV - Adrian Roefer, Jan Ole von Hartz (2022)
 
  CONDA_ENV_FILE_NAME="condenv.txt"
 
@@ -69,7 +69,7 @@ activateROS() {
         fi
 
         source "${ws_dir}/devel/setup.bash"
-        CONDA_ENV_NAME=$(cat "$CONDA_ENV_FILE_NAME")
+        CONDA_ENV_NAME=$(cat "$ws_dir/$CONDA_ENV_FILE_NAME")
         conda activate $CONDA_ENV_NAME
 
         if [ -f "${ws_dir}/pypath" ]; then
