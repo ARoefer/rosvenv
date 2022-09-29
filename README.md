@@ -10,13 +10,17 @@ Sounds good? Then come right on in!
 
 ## Installation
 
-Installation is as easy as chewing gum! First you need to make sure that you have python's `venv` package:
+Installation is as easy as chewing gum!
+First, either you need to have installed python's `venv` package or conda:
 
-```
-# For all ROS versions. Python 2 does not have venv
-sudo apt install python3-venv
+- venv
+    ```
+    # For all ROS versions. Python 2 does not have venv
+    sudo apt install python3-venv
 
-```
+    ```
+- conda
+    https://conda.io/projects/conda/en/latest/user-guide/install/index.html#regular-installation
 
 Then, simply `cd` to the root of this repository and run the install script:
 
@@ -41,14 +45,16 @@ createROSWS path/to/new/ws
 
 This is probably the first command you will try out. `createROSWS` takes a path for a directory to create and initializes a new catkin workspace within it. If ROS is not sourced it will source your installed version from `/opt/ros/*/setup.bash`. **NOTE**: If you, however you managed that, have multiple ROS versions installed, it will source all of them. In that case you should source ROS manually first.
 
-At the root of the workspace the command has created a `pyenv` directory containing the virtual environment for your workspace. The structure of your workspace should look something like this:
+If, when running the command you have an active conda environment, its name will be saved to a `condenv.txt` placed in the root of the workspace for later automatic activation.
+Otherwise, it has created a `pyenv` directory containing the venv for your workspace. The structure of your workspace should look something like this:
 
 ```
 ws
 ├── build
 ├── devel
 ├── logs
-├── pyenv
+├── pyenv (optional)
+├── condenv.txt (optional)
 ├── pypath (optional)
 └── src
 ``` 
@@ -59,7 +65,7 @@ The creation process will invoke `catkin build` once to generate the necessary `
 
 ### activateROS
 
-This command you'll probably use the most. It *activates* a workspace, sourcing its `setup.bash`, activating the respective virtual environment, and setting your `ROS_IP` and `ROS_MASTER_URI` to your local machine.
+This command you'll probably use the most. It *activates* a workspace, sourcing its `setup.bash`, activating the respective virtual environment (conda or venv), and setting your `ROS_IP` and `ROS_MASTER_URI` to your local machine.
 
 Its single argument is the path to the root of the workspace you want to activate. If you do not give any argument, it will default to `~ws`. If you have a primary workspace you work on most of the time, you can link it to that path.
 

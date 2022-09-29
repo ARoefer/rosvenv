@@ -1,4 +1,6 @@
-# ROSVENV - Adrian Roefer (2022)
+# ROSENV - Adrian Roefer, Jan Ole von Hartz (2022)
+
+ CONDA_ENV_FILE_NAME="condenv.txt"
 
 createROSWS() {
     if [ $# -ne 1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
@@ -30,8 +32,16 @@ createROSWS() {
                 cd $1/src
                 catkin_init_workspace
                 cd ..
-                python3 -m venv --system-site-packages pyenv
-                source pyenv/bin/activate
+                if [[ -z "${CONDA_PREFIX}" ]]; then
+                    CONDA_ENV_NAME=${CONDA_PREFIX##*/}
+                    echo "$CONDA_ENV_NAME" > $CONDA_ENV_FILE_NAME
+                    echo "Found activate conda env ${CONDA_ENV_NAME}. Saved it to workspace."
+                else
+                    echo "No activate conda env found. Creating venv."
+                    python3 -m venv --system-site-packages pyenv
+                    source pyenv/bin/activate
+                fi
+
                 catkin build
                 activateROS .
             else
@@ -46,7 +56,7 @@ activateROS() {
     if [ $# -eq 1 ]; then
         if [ $1 = "-h" ] || [ $1 = "--help" ]; then
             echo "Sources a ROS environment previously created by createROSWS."
-            echo "This includes sourcing the local venv and, optionally, extending PYTHONPATH"
+            echo "This includes sourcing the local conda env and, optionally, extending PYTHONPATH"
             echo 
             echo "Arguments: [path to ws root=~/ws]"
             echo
@@ -67,7 +77,15 @@ activateROS() {
         fi
 
         source "${ws_dir}/devel/setup.bash"
-        source "${ws_dir}/pyenv/bin/activate"
+        if test -f "$ws_dir/$CONDA_ENV_FILE_NAME"; then
+            echo "Found conda env. Sourcing"
+            CONDA_ENV_NAME=$(cat "$ws_dir/$CONDA_ENV_FILE_NAME")
+            conda activate $CONDA_ENV_NAME
+        else
+            echo "No conda env found. Sourcing venv"
+            source "${ws_dir}/pyenv/bin/activate"
+        fi
+
 
         if [ -f "${ws_dir}/pypath" ]; then
             export PYTHONPATH=$PYTHONPATH:$(tr '\n' ':' < "${ws_dir}/pypath")
