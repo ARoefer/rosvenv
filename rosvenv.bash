@@ -44,6 +44,7 @@ createROSWS() {
                 fi
 
                 catkin build
+                deactivate
                 activateROS .
             else
                 echo "Failed to create directory $1 for workspace."
@@ -85,6 +86,7 @@ activateROS() {
         else
             echo "No conda env found. Sourcing venv"
             source "${ws_dir}/pyenv/bin/activate"
+            _rename_function deactivate _deactivate
         fi
 
 
@@ -116,12 +118,24 @@ activateROS() {
     fi
 }
 
+_copy_function() {
+  test -n "$(declare -f "$1")" || return 
+  eval "${_/$1/$2}"
+}
+
+_rename_function() {
+  _copy_function "$@" || return
+  unset -f "$1"
+}
+
+
 deactivateROS() {
     if [[ -z ${ROS_DISTRO} ]]; then
         echo "ROS is not active."
         return
     fi
 
+    _rename_function _deactivate deactivate
     deactivate
     _restore_paths
 
