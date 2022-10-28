@@ -132,6 +132,20 @@ deactivateROS() {
 }
 
 
+reloadROS() {
+    if [[ -z ${_ROS_WS_DIR} ]]; then
+        echo "No ROS workspace active."
+        return
+    fi
+
+    echo "Reloading workspace ${_ROS_WS_DIR}"
+
+    temp_ws_path=${_ROS_WS_DIR}
+    deactivateROS
+    activateROS ${temp_ws_path}
+}
+
+
 _loadIPDict() {
     local -A ROS_IP_DICT
     if [ -f "${HOME}/.ros_ips" ]; then
