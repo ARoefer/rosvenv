@@ -102,7 +102,15 @@ activateROS() {
 
         _ROS_WS_DIR=${ws_dir}
 
-        printf "ROS activated!\nROS-IP: ${ROS_IP}\nROS MASTER URI: ${ROS_MASTER_URI}\n"
+        local -A ROS_IP_DICT=$(_loadIPDict)
+
+        if [ ${ROS_IP_DICT[AUTO]+_} ]; then
+            printf "ROS activated!\nAuto activating ROS master '${ROS_IP_DICT[AUTO]}'\n"
+            makeROSMaster ${ROS_IP_DICT[AUTO]}
+        else
+            printf "ROS activated!\nROS-IP: ${ROS_IP}\nROS MASTER URI: ${ROS_MASTER_URI}\n"
+        fi
+
     else
         echo "Cannot activate ROS environment ${ws_dir} as it does not exist"
     fi
@@ -124,6 +132,27 @@ deactivateROS() {
 }
 
 
+_loadIPDict() {
+    local -A ROS_IP_DICT
+    if [ -f "${HOME}/.ros_ips" ]; then
+        while IFS= read -r line; do
+            ROS_IP_DICT[${line%%=*}]=${line#*=}
+        done < "${HOME}/.ros_ips"            
+    fi
+
+    if [[ ! -z "${_ROS_WS_DIR}" ]] && [ -f "${_ROS_WS_DIR}/ros_ips" ]; then
+        while IFS= read -r line; do
+            ROS_IP_DICT[${line%%=*}]=${line#*=}
+        done < "${_ROS_WS_DIR}/ros_ips"
+    fi
+    echo '('
+    for key in  "${!ROS_IP_DICT[@]}" ; do
+        echo "[$key]=${ROS_IP_DICT[$key]}"
+    done
+    echo ')'
+}
+
+
 makeROSMaster() {
     if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
         echo "Sets the ROS master URI and ROS IP of this machine."
@@ -136,19 +165,8 @@ makeROSMaster() {
             echo "ROS needs to be sourced for this command"
             return
         fi
-      
-        local -A ROS_IP_DICT
-        if [ -f "${HOME}/.ros_ips" ]; then
-            while IFS= read -r line; do
-                ROS_IP_DICT[${line%%=*}]=${line#*=}
-            done < "${HOME}/.ros_ips"            
-        fi
 
-        if [[ ! -z "${_ROS_WS_DIR}" ]] && [ -f "${_ROS_WS_DIR}/ros_ips" ]; then
-            while IFS= read -r line; do
-                ROS_IP_DICT[${line%%=*}]=${line#*=}
-            done < "${_ROS_WS_DIR}/ros_ips"
-        fi
+        local -A ROS_IP_DICT=$(_loadIPDict)
 
         if [ $# = 0 ]; then
             if [ ${ROS_IP_DICT[DEFAULT]+_} ]; then
