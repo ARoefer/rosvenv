@@ -35,7 +35,7 @@ What did the install script just do to your system you ask? Well, it simply copi
 
 ## The ROSVENV-Commands
 
-ROSVENV provides a whole four (4!) commands. Let's go over them...
+ROSVENV provides a whole five (5!) commands. Let's go over them...
 
 ### createROSWS
 
@@ -84,6 +84,10 @@ This command simply deactivates the ROS workspace again. It restores the paths t
 
 While it does not take any arguments, one thing should be noted about it: It will unset **all** environment variables with `ROS` in the name.
 
+### reloadROS
+
+At times, especially after building a new package, catkin will require the workspace to be re-sourced. This command does just that!
+
 ### makeROSMaster
 
 This command will come in handy once you are ready to work with your actual robot friend. It changes the `ROS_MASTER_URI` and optionally also `ROS_IP` variables to connect you to a remote master. 
@@ -104,15 +108,15 @@ Exceptions are formulated like this:
 
 ```
 HOST1_IP=192.137.131.22
-HOST1_URI=192.137.131.1
+HOST1_URI=http://192.137.131.1:11311
 HOST2_IP=66.137.131.22
-HOST2_URI=66.137.131.1
+HOST2_URI=http://66.137.131.1:11311
 ...
 ```
 Please make sure that the files close with **exactly** one newline.
 You can also specify only IP or URI for an exception, it does not have to be both.
 
-Lastly, if you do not want to always have to type the host name, you can add a `DEFAULT=MY_HOST_NAME` line to either of the `ros_ips` files, which will cause the command to default to that host.
+Lastly, if you do not want to always have to type the host name, you can add a `DEFAULT=MY_HOST_NAME` line to either of the `ros_ips` files, which will cause the command to default to that host. In some cases, such as `rosvenv` being deployed on a robot, you will always want to use a non-standard URI/IP setup. For this case, you can add an `AUTO=MY_HOST_NAME` line to the config file. The designated host will be automatically configured whenever a workspace is activated.
 
 ## Conclusion
 
