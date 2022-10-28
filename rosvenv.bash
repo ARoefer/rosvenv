@@ -1,6 +1,6 @@
 # ROSENV - Adrian Roefer, Jan Ole von Hartz (2022)
 
- CONDA_ENV_FILE_NAME="condenv.txt"
+CONDA_ENV_FILE_NAME="condenv.txt"
 
 createROSWS() {
     if [ $# -ne 1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
@@ -32,7 +32,8 @@ createROSWS() {
                 cd $1/src
                 catkin_init_workspace
                 cd ..
-                if [[ -z "${CONDA_PREFIX}" ]]; then
+                if [[ -n "${CONDA_PREFIX}" ]]; then
+                    echo "Creating conda env"
                     CONDA_ENV_NAME=${CONDA_PREFIX##*/}
                     echo "$CONDA_ENV_NAME" > $CONDA_ENV_FILE_NAME
                     echo "Found activate conda env ${CONDA_ENV_NAME}. Saved it to workspace."
