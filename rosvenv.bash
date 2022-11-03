@@ -65,7 +65,7 @@ activateROS() {
             return
         fi
 
-        ws_dir=$1
+        ws_dir=`realpath $1`
     else
         ws_dir="${HOME}/ws"
     fi
