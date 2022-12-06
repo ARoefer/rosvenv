@@ -107,16 +107,16 @@ However, sometimes this pattern will not suffice. For those cases you can specif
 Exceptions are formulated like this:
 
 ```
-HOST1_IP=192.137.131.22
-HOST1_URI=http://192.137.131.1:11311
-HOST2_IP=66.137.131.22
-HOST2_URI=http://66.137.131.1:11311
+foo_IP=192.137.131.22
+foo_URI=http://192.137.131.1:11311
+bar_IP=66.137.131.22
+bar_URI=http://66.137.131.1:11311
 ...
 ```
 Please make sure that the files close with **exactly** one newline.
-You can also specify only IP or URI for an exception, it does not have to be both.
+You can also specify only IP or URI for an exception, it does not have to be both. Given the config obove, you can use `makeROSMaster foo` to set the `ROS_IP`, and `ROS_MASTER_URI` environment variables to `192.137.131.22` and `http://192.137.131.1:11311` respectively.
 
-Lastly, if you do not want to always have to type the host name, you can add a `DEFAULT=MY_HOST_NAME` line to either of the `ros_ips` files, which will cause the command to default to that host. In some cases, such as `rosvenv` being deployed on a robot, you will always want to use a non-standard URI/IP setup. For this case, you can add an `AUTO=MY_HOST_NAME` line to the config file. The designated host will be automatically configured whenever a workspace is activated.
+Lastly, if you do not want to always have to type the host name, you can add a `DEFAULT=MY_CONFIG_NAME` line to either of the `ros_ips` files, which will cause the command to default to that host. In some cases, such as `rosvenv` being deployed on a robot, you will always want to use a non-standard URI/IP setup. For this case, you can add an `AUTO=MY_CONFIG_NAME` line to the config file. The designated host will be automatically configured whenever a workspace is activated.
 
 ## Conclusion
 
