@@ -34,7 +34,7 @@ createROSWS() {
                 cd ..
                 if [[ -n "${CONDA_PREFIX}" ]]; then
                     echo "Creating conda env"
-                    CONDA_ENV_NAME=${CONDA_PREFIX##*/}
+                    CONDA_ENV_NAME=$CONDA_DEFAULT_ENV
                     echo "$CONDA_ENV_NAME" > $CONDA_ENV_FILE_NAME
                     echo "Found activate conda env ${CONDA_ENV_NAME}. Saved it to workspace."
                 else
