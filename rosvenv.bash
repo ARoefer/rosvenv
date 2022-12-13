@@ -44,12 +44,20 @@ createROSWS() {
                 fi
 
                 catkin build
-                deactivate
+                _deactivatePyEnv
                 activateROS .
             else
                 echo "Failed to create directory $1 for workspace."
             fi
         fi
+    fi
+}
+
+_deactivatePyEnv() {
+    if [[ -n "${CONDA_PREFIX}" ]]; then
+        conda deactivate
+    else
+        deactivate
     fi
 }
 
@@ -136,7 +144,7 @@ deactivateROS() {
     fi
 
     _rename_function _deactivate deactivate
-    deactivate
+    _deactivatePyEnv
     _restore_paths
 
     ros_vars=$(env | egrep -o '^[^=]+' | grep "ROS")
