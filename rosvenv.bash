@@ -11,6 +11,11 @@ createROSWS() {
         echo
         return
     else
+        if ! [ -x "$(command -v catkin)" ]; then
+            echo $'You seem to be missing catkin tools. Install by running \n\n  sudo apt install python3-catkin-tools\n'
+            return
+        fi
+
         if [ -d $1 ]; then
             echo "Given directory $1 already exists"
         else
