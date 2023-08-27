@@ -3,11 +3,11 @@
 CONDA_ENV_FILE_NAME="condenv.txt"
 
 createROSWS() {
-    if [ $# -ne 1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
+    if [ $# < 1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
         echo "Creates a new ROS catkin workspace under a given path."
         echo "Will copy ~/pypath to the new ws, if the file exists." 
         echo
-        echo "Arguments: nameOfnewWS"
+        echo "Arguments: nameOfnewWS, [Python version=3]"
         echo
         return
     else
@@ -43,13 +43,18 @@ createROSWS() {
                     echo "$CONDA_ENV_NAME" > $CONDA_ENV_FILE_NAME
                     echo "Found activate conda env ${CONDA_ENV_NAME}. Saved it to workspace."
                 else
+                    if [ $# -ge 2 ]; then
+                        pythonCommand="python$2"
+                    else
+                        pythonCommand="python3"
+                    fi
                     echo "No activate conda env found. Creating venv."
-                    python3 -m venv --system-site-packages pyenv
+                    eval $pythonCommand -m venv --system-site-packages pyenv
                     source pyenv/bin/activate
                 fi
 
                 catkin build
-                _deactivatePyEnv
+                deactivatePyEnv
                 activateROS .
             else
                 echo "Failed to create directory $1 for workspace."
