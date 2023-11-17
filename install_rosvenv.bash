@@ -1,5 +1,5 @@
 #!/bin/bash
-cp -f rosvenv.bash "${HOME}/.rosvenv.bash"
+cp -f $(realpath "$(dirname "$BASH_SOURCE")")/rosvenv.bash "${HOME}/.rosvenv.bash"
 
 if [ "$( type -t createROSWS )" != "function" ]; then
 	printf "\n# ROSVENV\nsource ~/.rosvenv.bash\n" >> "${HOME}/.bashrc"
