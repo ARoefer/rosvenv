@@ -3,16 +3,27 @@
 CONDA_ENV_FILE_NAME="condenv.txt"
 
 createROSWS() {
-    if [ $# < 1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
+    if [ $# -lt 1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
         echo "Creates a new ROS catkin workspace under a given path."
         echo "Will copy ~/pypath to the new ws, if the file exists." 
         echo
-        echo "Arguments: nameOfnewWS, [Python version=3]"
+        echo "Arguments: nameOfnewWS [Python version=3]"
         echo
         return
     else
+        if [ $# -ge 2 ]; then
+            pythonCommand="python$2"
+        else
+            pythonCommand="python3"
+        fi
+
         if ! [ -x "$(command -v catkin)" ]; then
             echo $'You seem to be missing catkin tools. Install by running \n\n  sudo apt install python3-catkin-tools\n'
+            return
+        fi
+
+        if ! [ -n "$(apt list --installed 2> /dev/null | grep $pythonCommand-venv)" ]; then
+            echo "venv for ${pythonCommand} does not seem to be installed."
             return
         fi
 
@@ -43,11 +54,6 @@ createROSWS() {
                     echo "$CONDA_ENV_NAME" > $CONDA_ENV_FILE_NAME
                     echo "Found activate conda env ${CONDA_ENV_NAME}. Saved it to workspace."
                 else
-                    if [ $# -ge 2 ]; then
-                        pythonCommand="python$2"
-                    else
-                        pythonCommand="python3"
-                    fi
                     echo "No activate conda env found. Creating venv."
                     eval $pythonCommand -m venv --system-site-packages pyenv
                     source pyenv/bin/activate
@@ -71,6 +77,13 @@ _deactivatePyEnv() {
     fi
 }
 
+isROSWS() {
+    if [ -f "$1/src/CMakeLists.txt" ] && [ -d "$1/pyenv" ]; then
+        return 0
+    fi
+    return -1
+}
+
 activateROS() {
     # Set default workspace if none was given
     if [ $# -eq 1 ]; then
@@ -85,7 +98,19 @@ activateROS() {
 
         ws_dir=`realpath $1`
     else
-        ws_dir="${HOME}/ws"
+        ws_dir=`realpath $PWD`
+    fi
+
+    pathIter="$ws_dir"
+    while [ "$pathIter" != "/" ] && ! isROSWS $pathIter; do
+        pathIter=`realpath "$pathIter/.."`
+    done
+
+    if isROSWS $pathIter; then
+        ws_dir=$pathIter
+    else
+        echo "Could not find a ROS workspace while traversing upwards from $ws_dir"
+        return -1
     fi
 
     if [ -d ${ws_dir} ] || [ -L ${ws_dir} ]; then
