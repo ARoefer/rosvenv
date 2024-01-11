@@ -2,21 +2,70 @@
 
 CONDA_ENV_FILE_NAME="condenv.txt"
 
+_rosvenv_precheck() {
+    if [ -d "/opt/ros/noetic" ]; then
+        return 0
+    fi
+    return -1
+}
+
+_rosvenv_print_help() {
+    echo "Creates a new ROS catkin workspace under a given path."
+    echo "Will copy ~/pypath to the new ws, if the file exists." 
+    echo
+    echo "Arguments: nameOfnewWS [Python version=python3] [--docker [image name | Dockerfile]]"
+    echo
+}
+
 createROSWS() {
-    if [ $# -lt 1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
-        echo "Creates a new ROS catkin workspace under a given path."
-        echo "Will copy ~/pypath to the new ws, if the file exists." 
-        echo
-        echo "Arguments: nameOfnewWS [Python version=3]"
-        echo
-        return
-    else
-        if [ $# -ge 2 ]; then
-            pythonCommand="python$2"
-        else
-            pythonCommand="python3"
+    original_args=$@
+    
+    ws_dir=""
+    pythonCommand="python3"
+
+    while [ : ]; do
+        if [ $# -lt 1 ]; then
+            break
         fi
 
+        if [[ "$1" =~ (--help|-h) ]]; then
+            _rosvenv_print_help
+            return
+        elif [[ "$1" =~ (--python) ]]; then
+            if [ $#  -lt 2 ]; then
+                _rosvenv_print_help
+                echo "Argument --python requires a parameter"
+                return -1
+            fi
+
+            pythonCommand=$2
+            shift 2
+        elif [[ "$1" =~ (--docker) ]]; then
+            if [ $#  -lt 2 ]; then
+                docker_image="$ROSVENV_DEFAULT_DOCKER_IMAGE"
+                shift 1
+            else
+                docker_image="$2"
+                shift 2
+            fi
+        elif [ -z "$ws_dir" ]; then
+            ws_dir=`realpath $1`
+            shift 1
+        else
+            _rosvenv_print_help
+
+            echo "Unknown argument \"$1\""
+
+            return -1
+        fi
+    done
+
+    if ! [ -z "$docker_image" ] && [ -z $ROSVENV_IN_DOCKER ]; then
+        if ! rosvenv_has_docker; then
+            echo "You are trying to create a docker workspace, but docker does not seem to be installed."
+            return 1
+        fi
+    else
         if ! [ -x "$(command -v catkin)" ]; then
             echo $'You seem to be missing catkin tools. Install by running \n\n  sudo apt install python3-catkin-tools\n'
             return
@@ -26,10 +75,12 @@ createROSWS() {
             echo "venv for ${pythonCommand} does not seem to be installed."
             return
         fi
+    fi
 
-        if [ -d $1 ]; then
-            echo "Given directory $1 already exists"
-        else
+    if [ -d "$ws_dir/src" ]; then
+        echo "Given directory $ws_dir seems to already have been initialized."
+    else
+        if [ -z "$docker_image" ] || ! [ -z "$ROSVENV_IN_DOCKER" ]; then
             _save_paths
 
             if [[ -z ${ROS_DISTRO} ]]; then
@@ -38,14 +89,14 @@ createROSWS() {
                 echo "Sourced ${ROS_DISTRO}"
             fi
             
-            mkdir -p "$1/src"
+            mkdir -p "$ws_dir/src"
             
-            if [ -d "$1/src" ]; then
+            if [ -d "$ws_dir/src" ]; then
                 if [ -f "${HOME}/.pypath" ]; then
-                    cp "${HOME}/pypath" $1/
+                    cp "${HOME}/pypath" $ws_dir/
                 fi
 
-                cd $1/src
+                cd $ws_dir/src
                 catkin_init_workspace
                 cd ..
                 if [[ -n "${CONDA_PREFIX}" ]]; then
@@ -63,8 +114,22 @@ createROSWS() {
                 deactivatePyEnv
                 activateROS .
             else
-                echo "Failed to create directory $1 for workspace."
+                echo "Failed to create directory $ws_dir for workspace."
             fi
+        else
+            mkdir -p "$ws_dir"
+
+            if [ -f "$docker_image" ]; then
+                cp "$docker_image" "$ws_dir/Dockerfile"
+                docker_image="$(_rosvenv_get_ws_image_name $ws_dir)"
+                rosvenv_docker_autobuild "$docker_image" "$ws_dir"
+            else
+                echo "$docker_image" > "$ws_dir/docker_override"
+            fi
+
+            container_name="$(_rosvenv_ws_path_to_name $ws_dir)"
+
+            rosvenv_docker_login_wrapper $docker_image $container_name "createROSWS" $original_args
         fi
     fi
 }
@@ -78,10 +143,36 @@ _deactivatePyEnv() {
 }
 
 isROSWS() {
-    if [ -f "$1/src/CMakeLists.txt" ] && [ -d "$1/pyenv" ]; then
+    if ([ -f "$1/src/CMakeLists.txt" ] || [ -h "$1/src/CMakeLists.txt" ]) && [ -d "$1/pyenv" ]; then
+        return 0
+    fi
+
+    return -1
+}
+
+_rosvenv_get_ws_image_name() {
+    if [ -f "$1/Dockerfile" ]; then
+        echo "${1##*/}:latest"
+        return
+    fi
+
+    if [ -f "$1/docker_override" ]; then
+        cat $1/docker_override
+        return
+    fi
+
+    echo $ROSVENV_DEFAULT_DOCKER_IMAGE
+}
+
+_rosvenv_ws_has_docker() {
+    if [ -f "$1/Dockerfile" ] || [ -f "$1/docker_override" ]; then
         return 0
     fi
     return -1
+}
+
+_rosvenv_ws_path_to_name() {
+    echo "${1##*/}"
 }
 
 activateROS() {
@@ -113,7 +204,17 @@ activateROS() {
         return -1
     fi
 
-    if [ -d ${ws_dir} ] || [ -L ${ws_dir} ]; then
+    if ! _rosvenv_precheck || ([ -z $ROSVENV_IN_DOCKER ] && [ $(_rosvenv_ws_has_docker $ws_dir) ]); then
+        docker_image="$(_rosvenv_get_ws_image_name $ws_dir)"
+        echo "Signing into docker ($docker_image) for workspace $ws_dir"
+
+        if ! rosvenv_docker_autobuild $docker_image $ws_dir; then
+            return -1
+        fi
+
+        container_name="$(_rosvenv_ws_path_to_name $ws_dir)"
+        rosvenv_docker_login_wrapper $docker_image $container_name "activateROS" $*
+    elif [ -d ${ws_dir} ] || [ -L ${ws_dir} ]; then
         # Source distro's setup.bash if it hasn't happened yet
         _save_paths
 
@@ -178,6 +279,10 @@ deactivateROS() {
         return
     fi
 
+    if [[ $ROSVENV_IN_DOCKER -eq 1 ]]; then
+        exit 0
+    fi
+
     _rename_function _deactivate deactivate
     _deactivatePyEnv
     _restore_paths
@@ -197,8 +302,21 @@ reloadROS() {
 
     echo "Reloading workspace ${_ROS_WS_DIR}"
 
+    if [[ $ROSVENV_IN_DOCKER -eq 1 ]]; then
+        _in_docker=1
+        unset ROSVENV_IN_DOCKER
+    else
+        _in_docker=0
+    fi
+
     temp_ws_path=${_ROS_WS_DIR}
     deactivateROS
+
+    # Avoid exiting docker
+    if [[ $_in_docker -eq 1 ]]; then
+        export ROSVENV_IN_DOCKER=1
+    fi
+
     activateROS ${temp_ws_path}
 }
 
