@@ -91,7 +91,12 @@ rosvenv_docker_start_ws_container() {
         return -1
     fi
 
-    docker run --name $2 -d -v $HOME:$HOME --user $USER $1 bash -c "while true; do sleep 0.5s; done"
+    docker run --name $2 \
+           --env=DISPLAY=$DISPLAY \
+           --gpus=all \
+           -v /tmp/.X11-unix:/tmp/.X11-unix \
+           -d -v $HOME:$HOME --user $USER $1 \
+           bash -c "while true; do sleep 0.5s; done"
 }
 
 rosvenv_docker_login_wrapper() {
