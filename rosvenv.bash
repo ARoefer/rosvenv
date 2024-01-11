@@ -60,6 +60,12 @@ createROSWS() {
         fi
     done
 
+    if ! _rosvenv_precheck && [ -z "$docker_image" ]; then
+        echo "You seem to be missing ROS. Please install it, or " \
+             "use the --docker option to use docker to run your environment"
+        return -1
+    fi
+
     if ! [ -z "$docker_image" ] && [ -z $ROSVENV_IN_DOCKER ]; then
         if ! rosvenv_has_docker; then
             echo "You are trying to create a docker workspace, but docker does not seem to be installed."
