@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     python3-venv \
     python3-catkin-tools \
     ros-noetic-catkin \
-    git
+    git \
+    wget
 
 # Needs to be removed because of the way ROSVENV works
 ENV ROS_DISTRO=""
