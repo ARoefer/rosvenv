@@ -27,8 +27,10 @@ rosvenv_docker_build_container() {
     if [ $# -gt 0 ]; then
         cd $1
         tag=$2
-        shift 2
-        args="*$"
+        if [ $# -gt 2 ]; then
+            shift 2
+            args="*$"
+        fi
     else
         cd $ROSVENV_ROOT
         tag="rosvenv:latest"
