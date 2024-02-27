@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     python3-catkin-tools \
     ros-noetic-catkin \
     git \
-    wget
+    wget \
+    iproute2 \
+    tmux
 
 # Needs to be removed because of the way ROSVENV works
 ENV ROS_DISTRO=""
