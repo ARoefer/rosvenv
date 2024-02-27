@@ -92,6 +92,8 @@ rosvenv_docker_start_ws_container() {
     fi
 
     docker run --name $2 \
+           --network=host \
+           --hostname $2 \
            --env DISPLAY=$DISPLAY \
            --gpus all \
            --env NVIDIA_VISIBLE_DEVICES=all \
@@ -103,7 +105,7 @@ rosvenv_docker_start_ws_container() {
 }
 
 rosvenv_docker_login_wrapper() {
-    if [ $# -lt 2 ]; then
+    if [ $# -lt 3 ]; then
         echo "Need name of image, workspace to log into and optionally command to execute."
         return -1
     fi
