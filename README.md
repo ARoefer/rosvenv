@@ -35,7 +35,7 @@ What did the install script just do to your system you ask? Well, it simply copi
 
 ## The ROSVENV-Commands
 
-ROSVENV provides a whole five (5!) commands. Let's go over them...
+ROSVENV provides a whole six (6!) commands. Let's go over them...
 
 ### createROSWS
 
@@ -117,6 +117,10 @@ Please make sure that the files close with **exactly** one newline.
 You can also specify only IP or URI for an exception, it does not have to be both. Given the config obove, you can use `makeROSMaster foo` to set the `ROS_IP`, and `ROS_MASTER_URI` environment variables to `192.137.131.22` and `http://192.137.131.1:11311` respectively.
 
 Lastly, if you do not want to always have to type the host name, you can add a `DEFAULT=MY_CONFIG_NAME` line to either of the `ros_ips` files, which will cause the command to default to that host. In some cases, such as `rosvenv` being deployed on a robot, you will always want to use a non-standard URI/IP setup. For this case, you can add an `AUTO=MY_CONFIG_NAME` line to the config file. The designated host will be automatically configured whenever a workspace is activated.
+
+### refreshROSEnvFile
+
+For editors, namely VSCode, the catkin package structure represents a problem when running Python applications in debugger or running Jupyter notebooks, as the kernels do not find catkin packages. This can be remmedied by using a `.env` file which contains the necessary environment variables to locate the packages. The `refreshROSEnvFile` automatically recovers these variables and writes them to `WS/ros.env`. You can then set this file [to be used by VSCode](https://code.visualstudio.com/docs/python/environments#_environment-variable-definitions-file). Note, that there is a separate setting [for debug configs](https://code.visualstudio.com/docs/python/debugging#_envfile), in case you run into trouble with the global setting.
 
 ## Conclusion
 

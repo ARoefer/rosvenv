@@ -326,6 +326,18 @@ reloadROS() {
     activateROS ${temp_ws_path}
 }
 
+refreshROSEnvFile() {
+    if [[ -z ${_ROS_WS_DIR} ]]; then
+        echo "No ROS workspace active."
+        return
+    fi
+
+    echo "Regenerating the \"ros.env\" file for ${_ROS_WS_DIR}."
+
+    env | grep -E "(PATH|ROS)" | grep -v PS1 > "${_ROS_WS_DIR}/ros.env"
+
+    echo "Done."
+}
 
 _loadIPDict() {
     local -A ROS_IP_DICT
