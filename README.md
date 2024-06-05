@@ -33,6 +33,14 @@ You can also do `./install_rosvenv.bash`, but then you'll have to re-source `.ba
 
 What did the install script just do to your system you ask? Well, it simply copied the file `rosvenv.bash` to `~/.rosvenv.bash` and added `source ~/.rosvenv.bash` to your `~/.bashrc`. Re-running the script will only perform the copy again, but will not modify your `.bashrc` unless the function `createROSWS` is nowhere to be found.
 
+# Uninstall
+To uninstall rosvenv, you cat just delete `~/.rosvenv.bash` and remove the following lines from your `.bashrc`.
+```
+# ROSVENV
+source ~/.rosvenv.bash
+export ROSVENV_ROOT=<PATH>
+```
+
 ## The ROSVENV-Commands
 
 ROSVENV provides a whole six (6!) commands. Let's go over them...
