@@ -149,7 +149,8 @@ _deactivatePyEnv() {
 }
 
 isROSWS() {
-    if ([ -f "$1/src/CMakeLists.txt" ] || [ -h "$1/src/CMakeLists.txt" ]) && [ -d "$1/pyenv" ]; then
+    # if ([ -f "$1/src/CMakeLists.txt" ] || [ -h "$1/src/CMakeLists.txt" ]) && [ -d "$1/pyenv" ]; then
+    if [ -f "$1/condenv.txt" ] || [ -d "$1/pyenv" ]; then
         return 0
     fi
 
