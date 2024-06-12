@@ -133,3 +133,18 @@ For editors, namely VSCode, the catkin package structure represents a problem wh
 ## Conclusion
 
 That's it! I hope this makes working with ROS a bit easier for you. If you find a bug, feel free to post and issue.
+
+## Actually, that's not it: Let's Dockerize
+
+As time moves on and Ubuntu versions get discarded, so this happened to Ubuntu 20.04 -- the last version officially supporting trusty ROS1. As most of our robots still run ROS1 and most of our tools are ROS1, this is a catastrophic development and must be dealt with. Instead of trying to figure out how to install ROS1 on future versions of Ubuntu, ROSVENV opts for eternally cocooning itself in the save embrace of a docker container.
+Everything you have learned about the workflow with ROSVENV so far remains the same, but you need to install docker on your system.
+
+### Installing Docker
+
+Follow the official instructions for installing docker (https://docs.docker.com/engine/install/ubuntu/) and add yourself to the `docker` group so you don't have to have sudo rights to use docker:
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+
