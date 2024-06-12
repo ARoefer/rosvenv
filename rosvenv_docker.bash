@@ -5,6 +5,8 @@
 ROSVENV_DEFAULT_DOCKER_IMAGE="rosvenv:latest"
 
 rosvenv_has_docker() {
+    # Checks if docker is installed on the system.
+
     if $(command -v docker > /dev/null); then 
         return 0;
     fi
@@ -12,6 +14,10 @@ rosvenv_has_docker() {
 }
 
 rosvenv_docker_build_container() {
+    # (Re-)builds a ROSVENV docker container. If no arguments are given,
+    # it will build the ROSVENV base container.
+    # args: [directory containing Dockerfile, tag of container, [additional args for build]]
+
     if [ -z "$ROSVENV_ROOT" ]; then
         echo "It seems ROSVENV is not installed, or its root is not exported"
         return -1
@@ -52,6 +58,9 @@ rosvenv_docker_build_container() {
 }
 
 rosvenv_docker_image_exists() {
+    # Checks if a docker image of a given name exists
+    # args: name of the image
+
     if [ $# -lt 1 ]; then
         echo "Need image name to check for"
         return -1
@@ -71,6 +80,9 @@ rosvenv_docker_image_exists() {
 }
 
 rosvenv_ws_docker_is_running() {
+    # Checks if a workspace container is already running.
+    # args: name of workspace
+
     if [ $# -lt 1 ]; then
         echo "Need name of workspace to check."
         return -1
@@ -86,6 +98,9 @@ rosvenv_ws_docker_is_running() {
 }
 
 rosvenv_docker_start_ws_container() {
+    # Starts a docker container for a workspace.
+    # args: name of image, name of container
+
     if [ $# -lt 2 ]; then
         echo "Need name of image and workspace to start a container for."
         return -1
@@ -105,6 +120,9 @@ rosvenv_docker_start_ws_container() {
 }
 
 rosvenv_docker_login_wrapper() {
+    # Wrapper for starting and logging into a container with additional re-execution of command in container
+    # args: name of the image, name of container, [command and args to run in container]
+
     if [ $# -lt 3 ]; then
         echo "Need name of image, workspace to log into and optionally command to execute."
         return -1
@@ -125,6 +143,9 @@ rosvenv_docker_login_wrapper() {
 }
 
 rosvenv_docker_autobuild() {
+    # Builds a custom docker container and the ROSVENV base container if it does not already exist
+    # args: name of image, path of dir containing Dockerfile
+
     base_image_exists=$(rosvenv_docker_image_exists $ROSVENV_DEFAULT_DOCKER_IMAGE)
 
     if [[ $base_image_exists -ne 0 ]]; then
