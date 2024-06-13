@@ -123,6 +123,16 @@ createROSWS() {
                 echo "Failed to create directory $ws_dir for workspace."
             fi
         else
+            # Sets return register to 255 if image does not exist
+            rosvenv_docker_image_exists $ROSVENV_DEFAULT_DOCKER_IMAGE
+
+            if [[ $? -ne 0 ]]; then
+                echo "ROSVENV base image does not seem to exist. Building it..."
+                rosvenv_docker_build_container
+            else
+                echo "ROSVENV image exists"
+            fi
+
             mkdir -p "$ws_dir"
 
             if [ -f "$docker_image" ]; then
@@ -135,7 +145,7 @@ createROSWS() {
 
             container_name="$(_rosvenv_ws_path_to_name $ws_dir)"
 
-            rosvenv_docker_login_wrapper $docker_image $container_name "createROSWS" $original_args
+            rosvenv_docker_login_wrapper $docker_image $container_name $ws_dir "createROSWS" $original_args
         fi
     fi
 }
@@ -211,7 +221,7 @@ activateROS() {
         return -1
     fi
 
-    if ! _rosvenv_precheck || ([ -z $ROSVENV_IN_DOCKER ] && [ $(_rosvenv_ws_has_docker $ws_dir) ]); then
+    if ! _rosvenv_precheck || ([ -z $ROSVENV_IN_DOCKER ] && $(_rosvenv_ws_has_docker $ws_dir)); then
         docker_image="$(_rosvenv_get_ws_image_name $ws_dir)"
         echo "Signing into docker ($docker_image) for workspace $ws_dir"
 
@@ -220,7 +230,7 @@ activateROS() {
         fi
 
         container_name="$(_rosvenv_ws_path_to_name $ws_dir)"
-        rosvenv_docker_login_wrapper $docker_image $container_name "activateROS" $*
+        rosvenv_docker_login_wrapper $docker_image $container_name $ws_dir "activateROS" $*
     elif [ -d ${ws_dir} ] || [ -L ${ws_dir} ]; then
         # Source distro's setup.bash if it hasn't happened yet
         _save_paths

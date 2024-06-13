@@ -13,6 +13,15 @@ rosvenv_has_docker() {
     return -1
 }
 
+rosvenv_has_nvctk() {
+    # Checks if docker is installed on the system.
+
+    if $(command -v nvidia-ctk > /dev/null); then 
+        return 0;
+    fi
+    return -1
+}
+
 rosvenv_docker_build_container() {
     # (Re-)builds a ROSVENV docker container. If no arguments are given,
     # it will build the ROSVENV base container.
@@ -79,6 +88,21 @@ rosvenv_docker_image_exists() {
     return 0
 }
 
+rosvenv_ws_docker_exists() {
+    # Checks if a workspace container is active in some form.
+    # args: name of workspace
+
+    if [ $# -lt 1 ]; then
+        echo "Need name of workspace to check."
+        return -1
+    fi
+
+    if [ -n $(docker ps --filter "name=$1" -q) ]; then
+        return 0
+    fi
+    return -1
+}
+
 rosvenv_ws_docker_is_running() {
     # Checks if a workspace container is already running.
     # args: name of workspace
@@ -88,55 +112,75 @@ rosvenv_ws_docker_is_running() {
         return -1
     fi
 
-    filtered_lines=$(docker ps | grep $1)
-    for e in $filtered_lines; do
-        if [ $e == $1 ]; then
-            return 0
-        fi
-    done
+    if [[ "$(docker ps --filter "name=$1" --format "{{.State}}")" == "running" ]]; then
+        return 0
+    fi
     return -1
 }
 
 rosvenv_docker_start_ws_container() {
     # Starts a docker container for a workspace.
-    # args: name of image, name of container
+    # args: name of image, name of container, [additional arguments to pass to docker run]
 
-    if [ $# -lt 2 ]; then
-        echo "Need name of image and workspace to start a container for."
+    if [ $# -lt 3 ]; then
+        echo "Need name of image, workspace name, and workspace dir to start a container for."
         return -1
     fi
 
-    docker run --name $2 \
+    gpu_options=""
+    if ! rosvenv_has_nvctk; then
+        echo "Found no installation of nvidia-container-toolkit."
+    else
+        echo "Found installation of nvidia-container-toolkit. Exposing your GPUs to the container..."
+        gpu_options="--gpus all --env NVIDIA_VISIBLE_DEVICES=all --env NVIDIA_DRIVER_CAPABILITIES=all"
+    fi
+
+    image_name=$1
+    container_name=$2
+    shift 2
+
+    docker run --name $container_name \
            --network=host \
-           --hostname $2 \
+           --hostname $container_name \
            --env DISPLAY=$DISPLAY \
-           --gpus all \
-           --env NVIDIA_VISIBLE_DEVICES=all \
-           --env NVIDIA_DRIVER_CAPABILITIES=all \
+           $gpu_options \
+           $@ \
            --env QT_X11_NO_MITSHM=1 \
            -v /tmp/.X11-unix:/tmp/.X11-unix \
-           -d -v $HOME:$HOME --user $USER $1 \
+           -d -v $HOME:$HOME --user $USER $image_name \
            bash -c "while true; do sleep 0.5s; done"
 }
 
 rosvenv_docker_login_wrapper() {
     # Wrapper for starting and logging into a container with additional re-execution of command in container
-    # args: name of the image, name of container, [command and args to run in container]
+    # args: name of the image, name of container, workspace directory, [command and args to run in container]
 
-    if [ $# -lt 3 ]; then
+    if [ $# -lt 4 ]; then
         echo "Need name of image, workspace to log into and optionally command to execute."
         return -1
     fi
 
     image_name=$1
     container_name=$2
+    ws_dir=$3
+    container_args=""
+
+    if $(rosvenv_ws_docker_exists $container_name) && ! $(rosvenv_ws_docker_is_running $container_name); then
+        echo "Container seems to be present but inactive. Restarting it..."
+        docker rm -f $container_name > /dev/null
+    fi
+
+    if [ -f "${ws_dir}/docker_args" ]; then
+        container_args="$(tr '\n' ' ' < ${ws_dir}/docker_args)"
+    fi
 
     if ! $(rosvenv_ws_docker_is_running $container_name); then
         echo "Starting docker container \"$container_name\" with image \"$image_name\"..."
-        rosvenv_docker_start_ws_container $image_name $container_name
+        rosvenv_docker_start_ws_container $image_name $container_name $container_args
     fi
 
-    shift 2
+
+    shift 3
     bash_instruction="printf \"source ~/.bashrc\nunset ROS_DISTRO\nexport ROSVENV_IN_DOCKER=1\n$*\n\" > /tmp/COMMAND; bash --init-file /tmp/COMMAND"
 
     docker exec -w $PWD -it $container_name bash -c "$bash_instruction"
@@ -146,9 +190,7 @@ rosvenv_docker_autobuild() {
     # Builds a custom docker container and the ROSVENV base container if it does not already exist
     # args: name of image, path of dir containing Dockerfile
 
-    base_image_exists=$(rosvenv_docker_image_exists $ROSVENV_DEFAULT_DOCKER_IMAGE)
-
-    if [[ $base_image_exists -ne 0 ]]; then
+    if ! $(rosvenv_docker_image_exists $ROSVENV_DEFAULT_DOCKER_IMAGE); then
         rosvenv_docker_build_container
     fi
 
