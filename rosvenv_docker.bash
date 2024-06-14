@@ -97,7 +97,7 @@ rosvenv_ws_docker_exists() {
         return -1
     fi
 
-    if [ -n $(docker ps --filter "name=$1" -q) ]; then
+    if [ -n "$(docker ps --filter "name=$1" -q)" ]; then
         return 0
     fi
     return -1
@@ -122,7 +122,7 @@ rosvenv_docker_start_ws_container() {
     # Starts a docker container for a workspace.
     # args: name of image, name of container, [additional arguments to pass to docker run]
 
-    if [ $# -lt 3 ]; then
+    if [ $# -lt 2 ]; then
         echo "Need name of image, workspace name, and workspace dir to start a container for."
         return -1
     fi
