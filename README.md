@@ -198,3 +198,30 @@ By default, ROSVENV mounts your home directory into the container and places you
 
 To see what is possible, please refer to the CLI documentation of [`docker run`](https://docs.docker.com/reference/cli/docker/container/run/).
 
+To enable terminal colors inside the container, uncomment `force_color_prompt=yes` inside your `~/.bashrc`. 
+
+### `rosvenvStopContainer` - Stopping a container
+
+Different from working with ROSVENV on your host system, leaving the container does not end its operation. Using `docker ps -a` you can see which containers are currently running. If you want to explicitly stop a container, you can use `rosvenvStopContainer [path/to/workspace]` to do so. This will invoke `docker rm -f` for the container for that workspace. Note that you don't have to pass the path to the workspace if you're somewhere in its directory tree.
+
+### `rosvenvRestartContainer` - Restarting containers
+
+Sometimes it seems that containers loose access to the GPU after a longer time of operation. In that case it is necessary to restart the container. Leave the container using `deactivateROS` or `Ctrl+D` and run `rosvenvRestartContainer [path/to/workspace]`. This will stop the current running container for the workspace and restart it, pulling you back into it.
+
+### `rosvenvRebuildContainer` - Rebuilding container images
+
+Sometimes you might change your `Dockerfile` and then need to rebuild your docker image. ROSVENV helps you with this with the `rosvenvRebuildContainer [path/to/workspace]` command. This command will only work if the workspace contains a `Dockerfile` *or* the workspace is set to launch the `rosvenv:latest` image. If this is the case, it will rebuild the image in question and (re-)start the container with the newly built image.
+
+### Caveats
+
+There a couple things to be aware of when using docker in combination with ROSVENV:
+ - **THE BIGGEST ASSUMPTION**: ROSVENV assumes that your workspace is located inside **your** home directory, as your home is the one that will get mounted into the container. If you want to have it elsewhere, you need to mount the directory into the container using the `docker_args` files and `-v` option (see examples above). We don't think this is an atypical assumption to make, but think you should be aware of it.
+ - ROSVENV uses the directory name of your workspace as name for the container it starts, independet where on your machine the workspace is located. So `~/workspaces/my_ws` and `~/my_ws` will both look for a container called `my_ws`. Essentially you cannot/should not have duplicate workspace names running at the same time.
+ - ROSVENV does not do any house-keeping. When you rebuild images this might abandon old images which need to be pruned. Use `docker images -a` to see a list of images on your system and their sizes. Use [`docker image prune`](https://docs.docker.com/reference/cli/docker/image/prune/) to remove these old versions.
+ - Layering workspaces becomes more cumbersome with docker: To layer dockerized workspaces, use `activateROS` to activate your parent workspace and go inside its container. Inside the container use `createROSWS` to create the new child workspace. After it has been created, manually copy the parent's `docker_override` file to the child workspace. If the parent has a custom image it uses, aka a `Dockerfile` at its root, create the `docker_override` and write the image name into it. This saves you some space on disk.
+ - It was important for us to make the workflow with and without docker as similar as possible, which is why you don't have to repeat your last command after entering a container. However, the implementation of this feature is a bit sketchy: As you enter the container, the last command is written into `/tmp/COMMAND` inside the container. The shell inside the container reads this file and executes the command before it hands control over to you. Since there is only one container instance per workspace, multiple clients entering the container at the exact same moment can potentially lead to race-condition. We have not experienced this so far, but have also not tried massive automized access to the container.
+
+## Conclusion
+
+We hope this tool will support you in managing ROS workspaces and network configurations, now and in the future. If you find any issues, please file them with the repository.
+ 
