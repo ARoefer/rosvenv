@@ -41,6 +41,14 @@ source ~/.rosvenv.bash
 export ROSVENV_ROOT=<PATH>
 ```
 
+In case you used docker, use
+
+```bash
+docker rm -f "$(docker ps --filter "name=_ws" -q)"
+```
+to kill all your running workspace containers (this assumes that all your workspaces contain `_ws` in their name). 
+Use `docker image rm rosvenv:latest` to remove the ROSVENV base image. Unfortunately there is currently no way to remove all dependent images. Use `docker image list -a` to list all images and remove the undesired ones with `docker image rm image_name`.
+
 ## The ROSVENV-Commands
 
 ROSVENV provides a whole six (6!) commands. Let's go over them...
@@ -136,7 +144,7 @@ That's it! We hope this makes working with ROS a bit easier for you. If you find
 
 ## The Post-20.04 World: Let's Dockerize
 
-As time moves on and Ubuntu versions get discarded, so this happened to Ubuntu 20.04 -- the last version officially supporting trusty ROS1. As most of our robots still run ROS1 and most of our tools are ROS1, this is a catastrophic development and must be dealt with. Instead of trying to figure out how to install ROS1 on future versions of Ubuntu, ROSVENV opts for eternally cocooning itself in the save embrace of a docker container.
+As the world moves on and Ubuntu versions get discarded, so this happened to Ubuntu 20.04 - the last version officially supporting trusty ROS1. As most of our robots still run ROS1 and most of our tools are ROS1, this is a catastrophic development and must be dealt with. Instead of trying to figure out how to install ROS1 on future versions of Ubuntu, ROSVENV opts for eternally cocooning itself in the save embrace of a docker container.
 Everything you have learned about the workflow with ROSVENV so far remains the same, but you need to install docker on your system.
 
 ### <a name="install_docker"></a> Installing Docker
@@ -155,7 +163,7 @@ If you have an Nvidia GPU, you'll also want to install the `nvidia-container-too
 
 The overall workflow with ROSVENV remains the same. `createROSWS` creates a workspace, `activateROS` activates a workspace. Docker acts as a hidden layer in both cases.
 
-If you don't have ROS installed on your host system, `createROSWS` will assume that you mean to create a dockerized workspace. If you have ROS installed but still want to dockerize your workspace, you can pass the `--docker` option. By default `createROSWS` will use the `rosvenv:latest` image to do so. This is a basic image built on top of the `osrf/ros:noetic-desktop-full` image. The most important thing this small expansion does, is mirror your user details into the container so that you can work on your host system without creating weird file ownership issues. It also adds `venv` and other small tools like `git` that the base image is missing. 
+To create a dockerized workspace pass the `--docker` option to `createROSWS`. By default `createROSWS` will use the `rosvenv:latest` image to do so. This is a basic image built on top of the `osrf/ros:noetic-desktop-full` image. The most important thing this small expansion does, is mirror your user details into the container so that you can work on your host system without creating weird file ownership issues. It also adds `venv` and other small tools like `git` that the base image is missing. 
 
 You can also use custom images, but you should always base them on the `rosvenv:latest` image. To create a workspace with a custom image, pass the name of the image or the path to the `Dockerfile` to `--docker` like so:
 
@@ -200,15 +208,15 @@ To see what is possible, please refer to the CLI documentation of [`docker run`]
 
 To enable terminal colors inside the container, uncomment `force_color_prompt=yes` inside your `~/.bashrc`. 
 
-### `rosvenvStopContainer` - Stopping a container
+### rosvenvStopContainer
 
 Different from working with ROSVENV on your host system, leaving the container does not end its operation. Using `docker ps -a` you can see which containers are currently running. If you want to explicitly stop a container, you can use `rosvenvStopContainer [path/to/workspace]` to do so. This will invoke `docker rm -f` for the container for that workspace. Note that you don't have to pass the path to the workspace if you're somewhere in its directory tree.
 
-### `rosvenvRestartContainer` - Restarting containers
+### rosvenvRestartContainer
 
 Sometimes it seems that containers loose access to the GPU after a longer time of operation. In that case it is necessary to restart the container. Leave the container using `deactivateROS` or `Ctrl+D` and run `rosvenvRestartContainer [path/to/workspace]`. This will stop the current running container for the workspace and restart it, pulling you back into it.
 
-### `rosvenvRebuildContainer` - Rebuilding container images
+### rosvenvRebuildContainer
 
 Sometimes you might change your `Dockerfile` and then need to rebuild your docker image. ROSVENV helps you with this with the `rosvenvRebuildContainer [path/to/workspace]` command. This command will only work if the workspace contains a `Dockerfile` *or* the workspace is set to launch the `rosvenv:latest` image. If this is the case, it will rebuild the image in question and (re-)start the container with the newly built image.
 
@@ -225,3 +233,4 @@ There a couple things to be aware of when using docker in combination with ROSVE
 ## Conclusion
 
 We hope this tool will support you in managing ROS workspaces and network configurations, now and in the future. If you find any issues, please file them with the repository.
+ 
