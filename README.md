@@ -41,6 +41,14 @@ source ~/.rosvenv.bash
 export ROSVENV_ROOT=<PATH>
 ```
 
+In case you used docker, use
+
+```bash
+docker rm -f "$(docker ps --filter "name=_ws" -q)"
+```
+to kill all your running workspace containers (this assumes that all your workspaces contain `_ws` in their name). 
+Use `docker image rm rosvenv:latest` to remove the ROSVENV base image. Unfortunately there is currently no way to remove all dependent images. Use `docker image list -a` to list all images and remove the undesired ones with `docker image rm image_name`.
+
 ## The ROSVENV-Commands
 
 ROSVENV provides a whole six (6!) commands. Let's go over them...
@@ -136,7 +144,7 @@ That's it! We hope this makes working with ROS a bit easier for you. If you find
 
 ## The Post-20.04 World: Let's Dockerize
 
-As time moves on and Ubuntu versions get discarded, so this happened to Ubuntu 20.04 -- the last version officially supporting trusty ROS1. As most of our robots still run ROS1 and most of our tools are ROS1, this is a catastrophic development and must be dealt with. Instead of trying to figure out how to install ROS1 on future versions of Ubuntu, ROSVENV opts for eternally cocooning itself in the save embrace of a docker container.
+As the world moves on and Ubuntu versions get discarded, so this happened to Ubuntu 20.04 - the last version officially supporting trusty ROS1. As most of our robots still run ROS1 and most of our tools are ROS1, this is a catastrophic development and must be dealt with. Instead of trying to figure out how to install ROS1 on future versions of Ubuntu, ROSVENV opts for eternally cocooning itself in the save embrace of a docker container.
 Everything you have learned about the workflow with ROSVENV so far remains the same, but you need to install docker on your system.
 
 ### <a name="install_docker"></a> Installing Docker
@@ -155,7 +163,7 @@ If you have an Nvidia GPU, you'll also want to install the `nvidia-container-too
 
 The overall workflow with ROSVENV remains the same. `createROSWS` creates a workspace, `activateROS` activates a workspace. Docker acts as a hidden layer in both cases.
 
-If you don't have ROS installed on your host system, `createROSWS` will assume that you mean to create a dockerized workspace. If you have ROS installed but still want to dockerize your workspace, you can pass the `--docker` option. By default `createROSWS` will use the `rosvenv:latest` image to do so. This is a basic image built on top of the `osrf/ros:noetic-desktop-full` image. The most important thing this small expansion does, is mirror your user details into the container so that you can work on your host system without creating weird file ownership issues. It also adds `venv` and other small tools like `git` that the base image is missing. 
+To create a dockerized workspace pass the `--docker` option to `createROSWS`. By default `createROSWS` will use the `rosvenv:latest` image to do so. This is a basic image built on top of the `osrf/ros:noetic-desktop-full` image. The most important thing this small expansion does, is mirror your user details into the container so that you can work on your host system without creating weird file ownership issues. It also adds `venv` and other small tools like `git` that the base image is missing. 
 
 You can also use custom images, but you should always base them on the `rosvenv:latest` image. To create a workspace with a custom image, pass the name of the image or the path to the `Dockerfile` to `--docker` like so:
 
