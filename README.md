@@ -220,8 +220,8 @@ There a couple things to be aware of when using docker in combination with ROSVE
  - ROSVENV does not do any house-keeping. When you rebuild images this might abandon old images which need to be pruned. Use `docker images -a` to see a list of images on your system and their sizes. Use [`docker image prune`](https://docs.docker.com/reference/cli/docker/image/prune/) to remove these old versions.
  - Layering workspaces becomes more cumbersome with docker: To layer dockerized workspaces, use `activateROS` to activate your parent workspace and go inside its container. Inside the container use `createROSWS` to create the new child workspace. After it has been created, manually copy the parent's `docker_override` file to the child workspace. If the parent has a custom image it uses, aka a `Dockerfile` at its root, create the `docker_override` and write the image name into it. This saves you some space on disk.
  - It was important for us to make the workflow with and without docker as similar as possible, which is why you don't have to repeat your last command after entering a container. However, the implementation of this feature is a bit sketchy: As you enter the container, the last command is written into `/tmp/COMMAND` inside the container. The shell inside the container reads this file and executes the command before it hands control over to you. Since there is only one container instance per workspace, multiple clients entering the container at the exact same moment can potentially lead to race-condition. We have not experienced this so far, but have also not tried massive automized access to the container.
+ - While `git` comes pre-installed in the `rosvenv` base image, it seems that double-tab completion does not work. We don't know why that is.
 
 ## Conclusion
 
 We hope this tool will support you in managing ROS workspaces and network configurations, now and in the future. If you find any issues, please file them with the repository.
- 
