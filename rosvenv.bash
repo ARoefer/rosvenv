@@ -123,12 +123,12 @@ createROSWS() {
                 echo "Failed to create directory $ws_dir for workspace."
             fi
         else
-            # Sets return register to 255 if image does not exist
-            rosvenv_docker_image_exists $ROSVENV_DEFAULT_DOCKER_IMAGE
-
-            if [[ $? -ne 0 ]]; then
+            if ! $(rosvenv_docker_image_exists $ROSVENV_DEFAULT_DOCKER_IMAGE); then
                 echo "ROSVENV base image does not seem to exist. Building it..."
-                rosvenv_docker_build_container
+                if ! rosvenv_docker_build_container; then
+                    echo "Something went wrong while trying to build base container. Please see output above."
+                    return -1
+                fi
             else
                 echo "ROSVENV image exists"
             fi

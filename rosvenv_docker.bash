@@ -28,7 +28,7 @@ rosvenv_docker_build_container() {
     # args: [directory containing Dockerfile, tag of container, [additional args for build]]
 
     if [ -z "$ROSVENV_ROOT" ]; then
-        echo "It seems ROSVENV is not installed, or its root is not exported"
+        echo "It seems ROSVENV is not installed, or its root is not exported. Maybe you need to re-source your bashrc."
         return -1
     fi
 
@@ -61,7 +61,7 @@ rosvenv_docker_build_container() {
     else
         echo "--- FAILURE: Please check output above ---"
     fi
-    
+
     cd $_PWD
     return $docker_result
 }
