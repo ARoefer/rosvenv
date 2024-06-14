@@ -167,7 +167,7 @@ createROSWS my_ws --docker my_image:tag
 createROSWS my_ws --docker path/to/some/Dockerfile
 ```
 
-In case of the `Dockerfile` the file will be copied to the root of the workspace, in the other case a file `docker_override` will be created at the root. These files serve as indicators for ROSVENV that this is a containerized workspace. When you activate a workspace with `activateROS`, ROSVENV will automatically launch the matching container image, or sign into the container when if it is already running.
+In case of the `Dockerfile` the file will be copied to the root of the workspace, in the other case a file `docker_override` will be created at the root. These files serve as indicators for ROSVENV that this is a containerized workspace. When you activate a workspace with `activateROS`, ROSVENV will automatically launch the matching container image, or sign into the container if it is already running.
 
 ### Working inside a container
 
@@ -183,7 +183,7 @@ me@my_machine:~ $ activateROS my_ws
 >> 1ad1aecc6325bafd4dbe3dbfe71d8ab8fb998ebdd4b0d13c170f4dbc4d44873b
 >> No conda env found. Sourcing venv
 >> ROS activated!
-(ROS noetic) (pyenv) me@my_ws:~ $
+(ROS noetic) (pyenv) me@my_ws:~ $ # Now we're inside the container
 ```
 
 By default, ROSVENV mounts your home directory into the container and places you in the directory where you invoked `activateROS`. As long as you are only working in your home directory, you should not need to do much else. However, you can also customize the arguments passed to the container, for example if you want to mount another directory into it. To do so, you simply create a `docker_args` file at the root of the workspace and specify the options you need:
