@@ -200,15 +200,15 @@ To see what is possible, please refer to the CLI documentation of [`docker run`]
 
 To enable terminal colors inside the container, uncomment `force_color_prompt=yes` inside your `~/.bashrc`. 
 
-### `rosvenvStopContainer` - Stopping a container
+### rosvenvStopContainer
 
 Different from working with ROSVENV on your host system, leaving the container does not end its operation. Using `docker ps -a` you can see which containers are currently running. If you want to explicitly stop a container, you can use `rosvenvStopContainer [path/to/workspace]` to do so. This will invoke `docker rm -f` for the container for that workspace. Note that you don't have to pass the path to the workspace if you're somewhere in its directory tree.
 
-### `rosvenvRestartContainer` - Restarting containers
+### rosvenvRestartContainer
 
 Sometimes it seems that containers loose access to the GPU after a longer time of operation. In that case it is necessary to restart the container. Leave the container using `deactivateROS` or `Ctrl+D` and run `rosvenvRestartContainer [path/to/workspace]`. This will stop the current running container for the workspace and restart it, pulling you back into it.
 
-### `rosvenvRebuildContainer` - Rebuilding container images
+### rosvenvRebuildContainer
 
 Sometimes you might change your `Dockerfile` and then need to rebuild your docker image. ROSVENV helps you with this with the `rosvenvRebuildContainer [path/to/workspace]` command. This command will only work if the workspace contains a `Dockerfile` *or* the workspace is set to launch the `rosvenv:latest` image. If this is the case, it will rebuild the image in question and (re-)start the container with the newly built image.
 
