@@ -22,6 +22,7 @@ createROSWS() {
     
     ws_dir=""
     pythonCommand="python3"
+    docker_image=""
 
     while [ : ]; do
         if [ $# -lt 1 ]; then
