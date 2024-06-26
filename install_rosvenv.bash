@@ -5,7 +5,8 @@ cat $(realpath "$(dirname "$BASH_SOURCE")")/rosvenv_docker.bash >> "${HOME}/.ros
 
 if [ "$( type -t createROSWS )" != "function" ]; then
 	printf "\n# ROSVENV\nsource ~/.rosvenv.bash\n" >> "${HOME}/.bashrc"
-	echo "export ROSVENV_ROOT=$(realpath "$(dirname "$BASH_SOURCE")")" >> "${HOME}/.bashrc"
+	export ROSVENV_ROOT="$(realpath "$(dirname "$BASH_SOURCE")")"
+	echo "export ROSVENV_ROOT=$ROSVENV_ROOT" >> "${HOME}/.bashrc"
 	echo "Added sourcing of ~/.rosvenv.bash to your ~/.bashrc"
 fi
 
