@@ -22,6 +22,7 @@ createROSWS() {
     
     ws_dir=""
     pythonCommand="python3"
+    docker_image=""
 
     while [ : ]; do
         if [ $# -lt 1 ]; then
@@ -123,6 +124,16 @@ createROSWS() {
                 echo "Failed to create directory $ws_dir for workspace."
             fi
         else
+            if ! $(rosvenv_docker_image_exists $ROSVENV_DEFAULT_DOCKER_IMAGE); then
+                echo "ROSVENV base image does not seem to exist. Building it..."
+                if ! rosvenv_docker_build_container; then
+                    echo "Something went wrong while trying to build base container. Please see output above."
+                    return -1
+                fi
+            else
+                echo "ROSVENV image exists"
+            fi
+
             mkdir -p "$ws_dir"
 
             if [ -f "$docker_image" ]; then
@@ -135,7 +146,7 @@ createROSWS() {
 
             container_name="$(_rosvenv_ws_path_to_name $ws_dir)"
 
-            rosvenv_docker_login_wrapper $docker_image $container_name "createROSWS" $original_args
+            rosvenv_docker_login_wrapper $docker_image $container_name $ws_dir "createROSWS" $original_args
         fi
     fi
 }
@@ -182,6 +193,21 @@ _rosvenv_ws_path_to_name() {
     echo "${1##*/}"
 }
 
+_rosvenv_find_ws_dir() {
+    res_path=`realpath $1`
+    pathIter="$res_path"
+    while [ "$pathIter" != "/" ] && ! isROSWS $pathIter; do
+        pathIter=`realpath "$pathIter/.."`
+    done
+
+    if ! $(isROSWS $pathIter); then
+        echo "Could not find a ROS workspace while traversing upwards from $res_path"
+        return -1
+    fi
+    echo $pathIter
+    return 0
+}
+
 activateROS() {
     # Set default workspace if none was given
     if [ $# -eq 1 ]; then
@@ -211,7 +237,7 @@ activateROS() {
         return -1
     fi
 
-    if ! _rosvenv_precheck || ([ -z $ROSVENV_IN_DOCKER ] && [ $(_rosvenv_ws_has_docker $ws_dir) ]); then
+    if ! _rosvenv_precheck || ([ -z $ROSVENV_IN_DOCKER ] && $(_rosvenv_ws_has_docker $ws_dir)); then
         docker_image="$(_rosvenv_get_ws_image_name $ws_dir)"
         echo "Signing into docker ($docker_image) for workspace $ws_dir"
 
@@ -220,7 +246,7 @@ activateROS() {
         fi
 
         container_name="$(_rosvenv_ws_path_to_name $ws_dir)"
-        rosvenv_docker_login_wrapper $docker_image $container_name "activateROS" $*
+        rosvenv_docker_login_wrapper $docker_image $container_name $ws_dir "activateROS" $*
     elif [ -d ${ws_dir} ] || [ -L ${ws_dir} ]; then
         # Source distro's setup.bash if it hasn't happened yet
         _save_paths
@@ -267,6 +293,109 @@ activateROS() {
     else
         echo "Cannot activate ROS environment ${ws_dir} as it does not exist"
     fi
+}
+
+rosvenvStopContainer() {
+    if [[ $ROSVENV_IN_DOCKER -eq 1 ]]; then
+        echo "You seem to currently be inside a container. Containers can only be stopped from the host system."
+        return -1
+    fi
+
+    if [ $# -eq 1 ]; then
+        ws_dir=`realpath $1`
+    else
+        ws_dir=`realpath $PWD`
+    fi
+
+    ws_dir="$(_rosvenv_find_ws_dir $ws_dir)"
+
+    if [ $? -ne 0 ]; then
+        echo $ws_dir
+        return -1
+    fi
+
+    if ! $(_rosvenv_ws_has_docker $ws_dir); then
+        echo "Workspace $ws_dir is not set to run in docker"
+        return -1
+    fi
+
+    container_name="$(_rosvenv_ws_path_to_name $ws_dir)"
+    if $(rosvenv_ws_docker_exists $container_name); then
+        docker rm -f $container_name > /dev/null
+        echo "Stopped container $container_name"
+    else
+        echo "Container $container_name does not seem to be active"
+    fi
+}
+
+rosvenvRestartContainer() {
+    if [[ $ROSVENV_IN_DOCKER -eq 1 ]]; then
+        echo "You seem to currently be inside a container. Containers can only be restarted from the host system."
+        return -1
+    fi
+
+    if [ $# -eq 1 ]; then
+        ws_dir=`realpath $1`
+    else
+        ws_dir=`realpath $PWD`
+    fi
+
+    ws_dir="$(_rosvenv_find_ws_dir $ws_dir)"
+
+    if [ $? -ne 0 ]; then
+        echo $ws_dir
+        return -1
+    fi
+
+    if ! $(_rosvenv_ws_has_docker $ws_dir); then
+        echo "Workspace $ws_dir is not set to run in docker"
+        return -1
+    fi
+
+    container_name="$(_rosvenv_ws_path_to_name $ws_dir)"
+    if $(rosvenv_ws_docker_exists $container_name); then
+        docker rm -f $container_name > /dev/null
+    fi
+
+    activateROS $ws_dir
+}
+
+rosvenvRebuildContainer() {
+    if [[ $ROSVENV_IN_DOCKER -eq 1 ]]; then
+        echo "You seem to currently be inside a container. Containers can only be rebuilt from the host system."
+        return -1
+    fi
+
+    if [ $# -eq 1 ]; then
+        ws_dir=`realpath $1`
+    else
+        ws_dir=`realpath $PWD`
+    fi
+
+    ws_dir="$(_rosvenv_find_ws_dir $ws_dir)"
+
+    if [ $? -ne 0 ]; then
+        echo $ws_dir
+        return -1
+    fi
+
+    if ! $(_rosvenv_ws_has_docker $ws_dir); then
+        echo "Workspace $ws_dir is not set to run in docker"
+        return -1
+    fi
+
+    image_name="$(_rosvenv_get_ws_image_name $ws_dir)"
+
+    if [[ "$image_name" == "$ROSVENV_DEFAULT_DOCKER_IMAGE" ]]; then
+        rosvenv_docker_build_container
+    elif [ -f "${ws_dir}/Dockerfile" ]; then
+        rosvenv_docker_build_container $image_name $ws_dir
+    else
+        echo "Cannot rebuild image of $ws_dir as workspace does not depend on rosvenv:latest and does not have a Dockerfile"
+        return -1 
+    fi
+
+    rosvenvRestartContainer $ws_dir
 }
 
 _copy_function() {
