@@ -97,7 +97,7 @@ rosvenv_ws_docker_exists() {
         return -1
     fi
 
-    if [ -n "$(docker ps --filter "name=$1" -q)" ]; then
+    if [ -n "$(docker ps --filter "name=$1" -qa)" ]; then
         return 0
     fi
     return -1
