@@ -395,6 +395,11 @@ rosvenvRebuildContainer() {
         return -1 
     fi
 
+    if [ $? -ne 0 ]; then
+        echo "Rebuilding container for ${ws_dir} failed. See output above"
+        return -1
+    fi
+
     rosvenvRestartContainer $ws_dir
 }
 

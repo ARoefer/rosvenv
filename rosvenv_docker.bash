@@ -54,9 +54,10 @@ rosvenv_docker_build_container() {
 
     echo "--- Building your personal ROSVENV docker container tagged \"${tag}\" ---"
 
-    docker_result=$(docker buildx build -t $tag . $args)
+    docker buildx build -t $tag . $args
+    docker_result=$?
 
-    if $docker_result; then
+    if [ $docker_result -eq 0 ]; then
         echo "--- Successfully built your container ---"
     else
         echo "--- FAILURE: Please check output above ---"
