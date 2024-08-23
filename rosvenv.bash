@@ -389,7 +389,7 @@ rosvenvRebuildContainer() {
     if [[ "$image_name" == "$ROSVENV_DEFAULT_DOCKER_IMAGE" ]]; then
         rosvenv_docker_build_container
     elif [ -f "${ws_dir}/Dockerfile" ]; then
-        rosvenv_docker_build_container $image_name $ws_dir
+        rosvenv_docker_build_container $ws_dir $image_name
     else
         echo "Cannot rebuild image of $ws_dir as workspace does not depend on rosvenv:latest and does not have a Dockerfile"
         return -1 
