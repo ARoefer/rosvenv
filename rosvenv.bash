@@ -277,7 +277,7 @@ activateROS() {
         export ROS_IP="127.0.0.1"  #${ip_array[0]}
         export ROS_MASTER_URI=http://${ROS_IP}:11311
 
-        export PS1="(ROS ${ROS_DISTRO}) ${PS1:-}"
+        export PS1="(ROS $(_rosvenv_ws_path_to_name $ws_dir)) ${PS1:-}"
 
         _ROS_WS_DIR=${ws_dir}
 
