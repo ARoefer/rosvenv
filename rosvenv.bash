@@ -78,7 +78,7 @@ createROSWS() {
             return
         fi
 
-        if ! [ -n "$(apt list --installed 2> /dev/null | grep $pythonCommand-venv)" ]; then
+        if $pythonCommand -m venv 1>/dev/null 2>/dev/null; then
             echo "venv for ${pythonCommand} does not seem to be installed."
             return
         fi
@@ -115,6 +115,12 @@ createROSWS() {
                     echo "No activate conda env found. Creating venv."
                     eval $pythonCommand -m venv --system-site-packages pyenv
                     source pyenv/bin/activate
+		    # Pip is always outdated
+		    eval $pythonCommand -m pip install -U pip
+		    if [ "python3" != "$pythonCommand" ]; then
+			echo "You are using a Python different from 3.8. We need to install empy and catkin-tools."
+			eval $pythonCommand -m pip install -U empy catkin-tools
+		    fi
                 fi
 
                 catkin build
